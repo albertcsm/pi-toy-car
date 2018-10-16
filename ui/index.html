@@ -1,0 +1,90 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<style>
+body {
+	margin: 0px;
+	background-color: DodgerBlue;
+}
+.gamebtn-container {
+	display: flex;
+	width:100%;
+	height:100%;
+	justify-content: center;
+	align-items: center;
+}
+.gamebtn-column {
+	display: flex;
+	justify-content: center;
+	flex-direction: column;
+}
+.gamebtn {
+	width:20vw;
+	height:20vw;
+	margin:2vw;
+	line-height:20vw;
+	font-size:2vw;
+	background-color: #ddd;
+	text-align: center;
+}
+</style>
+<script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
+</head>
+<body>
+<div class="gamebtn-container">
+<div id="leftbtn" class="gamebtn">Left</div>
+<div class="gamebtn-column">
+<div id="forwardbtn" class="gamebtn">Forward</div>
+<div id="backbtn" class="gamebtn">Back</div>
+</div>
+<div id="rightbtn" class="gamebtn">Right</div>
+<!--div id="stopbtn" class="gamebtn">Stop</div-->
+</div>
+<script>
+	$("#leftbtn").on('touchstart', function(e) {
+		e.preventDefault();
+		fetch('/action/left', { method: 'POST' });
+	});
+	$("#leftbtn").on('touchend', function(e) {
+		e.preventDefault();
+		fetch('/action/stop', { method: 'POST' });
+	});
+
+	$("#forwardbtn").on('touchstart', function(e) {
+		e.preventDefault();
+		fetch('/action/forward', { method: 'POST' });
+	});
+	$("#forwardbtn").on('touchend', function(e) {
+		e.preventDefault();
+		fetch('/action/stop', { method: 'POST' });
+	});
+
+	$("#backbtn").on('touchstart', function(e) {
+		e.preventDefault();
+		fetch('/action/back', { method: 'POST' });
+	});
+	$("#backbtn").on('touchend', function(e) {
+		e.preventDefault();
+		fetch('/action/stop', { method: 'POST' });
+	});
+
+	$("#rightbtn").on('touchstart', function(e) {
+		e.preventDefault();
+		fetch('/action/right', { method: 'POST' });
+	});
+	$("#rightbtn").on('touchend', function(e) {
+		e.preventDefault();
+		fetch('/action/stop', { method: 'POST' });
+	});
+
+	$("#stopbtn").on('touchstart', function(e) {
+		e.preventDefault();
+		fetch('/action/stop', { method: 'POST' });
+	});
+
+document.addEventListener('gesturestart', function (e) {
+	    e.preventDefault();
+});
+</script>
+</body>
+</html>
