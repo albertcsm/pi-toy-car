@@ -1,98 +1,166 @@
 <html>
 
 <head>
-	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-	<style>
-		body {
-			margin: 0em;
-			background-color: DodgerBlue;
-			color: white;
-		}
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <style>
+    body {
+      margin: 0em;
+      background-color: DodgerBlue;
+      color: white;
+    }
 
-		.gamebtn-container {
-			display: flex;
-			width: 100%;
-			height: 100%;
-			justify-content: center;
-			align-items: center;
-		}
+    .gamebtn-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      justify-content: center;
+      align-items: center;
+    }
 
-		.gamebtn-column {
-			display: flex;
-			justify-content: center;
-			flex-direction: column;
-		}
+    .gamebtn-column {
+      display: flex;
+      justify-content: center;
+      flex-direction: column;
+    }
 
-		.gamebtn {
-			width: 20vw;
-			height: 20vw;
-			margin: 2vw;
-			line-height: 20vw;
-			font-size: 2vw;
-			background-color: #ddd;
-			color: black;
-			text-align: center;
-		}
-	</style>
+    .gamebtn {
+      width: 30vh;
+      height: 30vh;
+      margin: 2vw;
+      line-height: 30vh;
+      font-size: 10vh;
+      background-color: #ddd;
+      color: black;
+      text-align: center;
+    }
+
+    .debuginfo {
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 0.5em;
+      font-size: 1em;
+      position: absolute;
+    }
+  </style>
   <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/mathjs/5.2.0/math.min.js"></script>
 </head>
 
 <body>
-	<div class="gamebtn-container">
-		<div id="leftbtn" class="gamebtn">Left</div>
-		<div class="gamebtn-column">
-			<div id="forwardbtn" class="gamebtn">Forward</div>
-			<div id="backbtn" class="gamebtn">Back</div>
-		</div>
-		<div id="rightbtn" class="gamebtn">Right</div>
-		<!--div id="stopbtn" class="gamebtn">Stop</div-->
-	</div>
-	<script>
-		$("#leftbtn").on('touchstart', function (e) {
-			e.preventDefault();
-			fetch('/action/left', { method: 'POST' });
-		});
-		$("#leftbtn").on('touchend', function (e) {
-			e.preventDefault();
-			fetch('/action/stop', { method: 'POST' });
-		});
+  <span id="debuginfo" class="debuginfo">-</span>
+  <div class="gamebtn-container">
+    <div class="gamebtn-column">
+      <div id="movebtn" class="gamebtn">Move</div>
+      <div id="stopbtn" class="gamebtn">Stop</div>
+    </div>
+  </div>
+  <script>
+    var state = {
+      move: false,
+      forward: 0,
+      steering: 0
+    };
 
-		$("#forwardbtn").on('touchstart', function (e) {
-			e.preventDefault();
-			fetch('/action/forward', { method: 'POST' });
-		});
-		$("#forwardbtn").on('touchend', function (e) {
-			e.preventDefault();
-			fetch('/action/stop', { method: 'POST' });
-		});
+    var moving = false;
 
-		$("#backbtn").on('touchstart', function (e) {
-			e.preventDefault();
-			fetch('/action/back', { method: 'POST' });
-		});
-		$("#backbtn").on('touchend', function (e) {
-			e.preventDefault();
-			fetch('/action/stop', { method: 'POST' });
-		});
+    var timerId = null;
 
-		$("#rightbtn").on('touchstart', function (e) {
-			e.preventDefault();
-			fetch('/action/right', { method: 'POST' });
-		});
-		$("#rightbtn").on('touchend', function (e) {
-			e.preventDefault();
-			fetch('/action/stop', { method: 'POST' });
-		});
+    function sendControlSignal() {
+      if (!timerId) {
+        timerId = setTimeout(function () {
+          if (state.move) {
+            const instruction = { forward: state.forward, steering: state.steering };
+            fetch('/action/move', { method: 'POST', body: JSON.stringify(instruction) }).then(() => {
+              moving = true;
+              timerId = null;
+            });
+          } else {
+            if (moving) {
+              fetch('/action/stop', { method: 'POST' }).then(() => {
+                moving = false;
+                timerId = null;
+              });
+            } else {
+              timerId = null;
+            }
+          }
+        });
+      }
+      
+    }
 
-		$("#stopbtn").on('touchstart', function (e) {
-			e.preventDefault();
-			fetch('/action/stop', { method: 'POST' });
-		});
+    $("#movebtn").on('touchstart', function (e) {
+      e.preventDefault();
+      state.move = true;
+      sendControlSignal();
+    });
+    $("#movebtn").on('touchend', function (e) {
+      e.preventDefault();
+      state.move = false;
+      sendControlSignal();
+    });
 
-		document.addEventListener('gesturestart', function (e) {
-			e.preventDefault();
-		});
-	</script>
+    $("#stopbtn").on('touchstart', function (e) {
+      e.preventDefault();
+      state.move = false;
+      sendControlSignal();
+    });
+
+    document.addEventListener('gesturestart', function (e) {
+      e.preventDefault();
+    });
+
+    function getRotationMatrix(alpha, beta, gamma) {
+      _z = alpha * Math.PI / 180;
+      _x = beta * Math.PI / 180;
+      _y = gamma * Math.PI / 180;
+
+      cX = Math.cos(_x);
+      cY = Math.cos(_y);
+      cZ = Math.cos(_z);
+      sX = Math.sin(_x);
+      sY = Math.sin(_y);
+      sZ = Math.sin(_z);
+
+      var r = math.matrix([
+        [ cZ*cY+sZ*sX*sY,  -cY*sZ+cZ*sX*sY, cX*sY ],
+        [ cX*sZ,           cZ*cX,           -sX   ],
+        [ -cZ*sY+sZ*sX*cY, sZ*sY+cZ*cY*sX,  cX*cY ]       
+      ]);
+
+      return r;
+    }
+
+    window.addEventListener('deviceorientation', function(event) {
+      var r = getRotationMatrix(event.alpha, event.beta, event.gamma);  // world-to-device coordinate frame
+      var r_t = math.transpose(r);                                      // device-to-world coordinate frame
+
+      var p1 = math.multiply(r_t, [ 0, 0, 1 ]);  // back-side normal of device
+      var p1_z = math.subset(p1, math.index(2)); // Z-component of device back-side normal
+
+      var forwardTilt;
+      if (event.beta < -90) {
+        forwardTilt = -180 - Math.asin(p1_z) * 180 / Math.PI;
+      } else if (event.beta < 0) {
+        forwardTilt = 180 - Math.asin(p1_z) * 180 / Math.PI;
+      } else {
+        forwardTilt = Math.asin(p1_z) * 180 / Math.PI;
+      }
+
+      var cross = math.cross(p1, [ 0, 0, 1 ]);   // x-axis of device when no steering tilt
+
+      var p2 = math.multiply(r_t, [ 1, 0, 0 ]);  // x-axis of device with steering tilt
+
+      var p2_z = math.subset(p2, math.index(2)); // Z-component of p2
+
+      var steeringTilt = Math.sign(p2_z) * Math.acos(math.dot(p2, cross) / math.norm(cross)) * 180 / Math.PI;
+
+      $("#debuginfo").html('forward tilt = ' + forwardTilt.toFixed(3)+ '<br/> steering tilt = ' + steeringTilt.toFixed(3));
+
+      state.forward = forwardTilt / 90;
+      state.steering = steeringTilt / 90;
+      sendControlSignal();
+    });
+  </script>
 </body>
 
 </html>
