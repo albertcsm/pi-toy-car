@@ -146,18 +146,22 @@
         forwardTilt = Math.asin(p1_z) * 180 / Math.PI;
       }
 
-      var cross = math.cross(p1, [ 0, 0, 1 ]);   // x-axis of device when no steering tilt
+      var upsideDown = forwardTilt < -90 || forwardTilt > 90;
+      var cross = math.cross(p1, [ 0, 0, upsideDown ? -1 : 1 ]);   // x-axis of device when no steering tilt
 
       var p2 = math.multiply(r_t, [ 1, 0, 0 ]);  // x-axis of device with steering tilt
 
       var p2_z = math.subset(p2, math.index(2)); // Z-component of p2
 
-      var steeringTilt = Math.sign(p2_z) * Math.acos(math.dot(p2, cross) / math.norm(cross)) * 180 / Math.PI;
-
-      $("#debuginfo").html('forward tilt = ' + forwardTilt.toFixed(3)+ '<br/> steering tilt = ' + steeringTilt.toFixed(3));
+      var steeringTilt = Math.sign(p2_z * (upsideDown ? -1 : 1)) * Math.acos(math.dot(p2, cross) / math.norm(cross)) * 180 / Math.PI;
 
       state.forward = forwardTilt / 90;
       state.steering = steeringTilt / 90;
+
+      $("#debuginfo").html(
+        'forward tilt = ' + forwardTilt.toFixed(3)+ '<br/>' +
+        'steering tilt = ' + steeringTilt.toFixed(3));
+
       sendControlSignal();
     });
   </script>
