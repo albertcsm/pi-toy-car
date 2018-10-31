@@ -59,6 +59,10 @@ if __name__ == "__main__":
     web_frontend = WebFrontend(car_controller)
     web_frontend.start()
 
+    from gamepadfrontend import GamepadFrontend
+    gamepad_frontend = GamepadFrontend(car_controller)
+    gamepad_frontend.start()
+    
     print('Started')
     while True:
         time.sleep(1)

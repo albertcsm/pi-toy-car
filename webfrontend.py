@@ -1,4 +1,5 @@
 import json
+import threading
 
 from flask import Flask, send_from_directory, redirect, request
 app = Flask(__name__)
@@ -50,6 +51,11 @@ class WebFrontend():
     def __init__(self, controller):
         global car_controller
         car_controller = controller
+    
+    def __serve(self):
+        app.run(host="0.0.0.0", port=5000)
 
     def start(self):
-        app.run(host="0.0.0.0")
+        self.thread = threading.Thread(target=self.__serve)
+        self.thread.daemon = True
+        self.thread.start()
